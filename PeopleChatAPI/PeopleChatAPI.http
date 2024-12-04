@@ -1,0 +1,6 @@
+@PeopleChatAPI_HostAddress = http://localhost:5001
+
+GET {{PeopleChatAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
