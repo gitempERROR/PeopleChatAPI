@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
 using PeopleChatAPI.Models;
 
 namespace PeopleChatAPI.Controllers
@@ -41,67 +43,29 @@ namespace PeopleChatAPI.Controllers
             return auth;
         }
 
-        // PUT: api/Auth/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutAuth(int id, Auth auth)
-        {
-            if (id != auth.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(auth).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!AuthExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
         // POST: api/Auth
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Auth>> PostAuth(Auth auth)
+        public async Task<ActionResult<User>> PostAuth(Auth auth)
         {
-            _context.Auths.Add(auth);
-            await _context.SaveChangesAsync();
+            Auth? newAuth = new Auth();
+            User? user = new User();
+            try
+            {
+                newAuth = await _context.Auths.Where(x => x.UserLogin == auth.UserLogin && x.UserPassword == auth.UserPassword).FirstOrDefaultAsync();
+                user = await _context.Users.Where(x => x.AuthId == newAuth!.Id).FirstOrDefaultAsync();
 
-            return CreatedAtAction(nameof(GetAuth), new { id = auth.Id }, auth);
-        }
+                if (user != null)
+                {
+                    return user;
+                }
 
-        // DELETE: api/Auths/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteAuth(int id)
-        {
-            var auth = await _context.Auths.FindAsync(id);
-            if (auth == null)
+                return NotFound();
+            }
+            catch
             {
                 return NotFound();
             }
-
-            _context.Auths.Remove(auth);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool AuthExists(int id)
-        {
-            return _context.Auths.Any(e => e.Id == id);
         }
     }
 }
