@@ -1,71 +1,114 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
+using Microsoft.IdentityModel.Tokens;
 using PeopleChatAPI.Models;
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
 namespace PeopleChatAPI.Controllers
 {
     [Route("api/Auth")]
     [ApiController]
-    public class AuthController : ControllerBase
+    public class AuthController(PeopleChatContext context) : ControllerBase
     {
-        private readonly PeopleChatContext _context;
+        private readonly PeopleChatContext _context = context;
 
-        public AuthController(PeopleChatContext context)
+        [HttpPost("Register")]
+        public async Task<IResult> CreateNewUser(string userLogin, Byte[] userPassword)
         {
-            _context = context;
-        }
-
-        // GET: api/Auth
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Auth>>> GetAuths()
-        {
-            return await _context.Auths.ToListAsync();
-        }
-
-        // GET: api/Auth/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Auth>> GetAuth(int id)
-        {
-            var auth = await _context.Auths.FindAsync(id);
-
-            if (auth == null)
+            Auth auth = new Auth();
+            try
             {
-                return NotFound();
+                auth.UserLogin = userLogin;
+                auth.UserPassword = userPassword;
+                auth.RoleId = _context.Roles.FirstOrDefaultAsync(x => x.RoleName == "user")!.Id;
+                await _context.Auths.AddAsync(auth);
+                await _context.SaveChangesAsync();
+            }
+            catch {
+                return Results.Unauthorized();
             }
 
-            return auth;
+            try
+            {
+                User user = new User();
+                user.UserFirstname = "";
+                user.UserLastname = "";
+                user.AuthId = auth.Id;
+                await _context.Users.AddAsync(user);
+                await _context.SaveChangesAsync();
+
+                string encodedJwt = GetJWT(userLogin);
+
+                var response = new
+                {
+                    access_token = encodedJwt,
+                    user_data = user
+                };
+
+                return Results.Json(response);
+            }
+            catch {
+                return Results.Unauthorized();
+            }
         }
 
-        // POST: api/Auth
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<User>> PostAuth(Auth auth)
+        [HttpPost("Login")]
+        public async Task<IResult> PostAuth(string userLogin, Byte[] userPassword)
         {
             Auth? newAuth = new Auth();
             User? user = new User();
             try
             {
-                newAuth = await _context.Auths.Where(x => x.UserLogin == auth.UserLogin && x.UserPassword == auth.UserPassword).FirstOrDefaultAsync();
-                user = await _context.Users.Where(x => x.AuthId == newAuth!.Id).FirstOrDefaultAsync();
+                newAuth = await _context.Auths.FirstOrDefaultAsync(x => x.UserLogin == userLogin && x.UserPassword == userPassword);
+                user = await _context.Users.FirstOrDefaultAsync(x => x.AuthId == newAuth!.Id);
 
-                if (user != null)
+                if (user == null) return Results.Unauthorized();
+
+                string encodedJwt = GetJWT(userLogin);
+
+                var response = new
                 {
-                    return user;
-                }
+                    access_token = encodedJwt,
+                    user_data = user
+                };
 
-                return NotFound();
+                return Results.Json(response);
             }
             catch
             {
-                return NotFound();
+                return Results.Unauthorized();
             }
+        }
+
+        private string GetJWT(string UserLogin)
+        {
+            var claims = new List<Claim> { new Claim(ClaimTypes.Name, UserLogin) };
+
+            var jwt = new JwtSecurityToken
+            (
+                issuer: AuthOptions.ISSUER,
+                audience: AuthOptions.AUDIENCE,
+                claims: claims,
+                expires: DateTime.UtcNow.Add(TimeSpan.FromDays(30)),
+                signingCredentials: new SigningCredentials
+                (
+                    AuthOptions.GetSymmetricSecurityKey(),
+                    SecurityAlgorithms.HmacSha256
+                )
+            );
+
+            string encodedJwt = new JwtSecurityTokenHandler().WriteToken(jwt);
+
+            return encodedJwt;
         }
     }
 }
