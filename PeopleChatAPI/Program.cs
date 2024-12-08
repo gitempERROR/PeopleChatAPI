@@ -6,6 +6,11 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using PeopleChatAPI.Models;
+using Microsoft.OpenApi.Models;
+using PeopleChatAPI.Configuration;
+using Microsoft.Extensions.Options;
+using PeopleChatAPI.Interfaces;
+using PeopleChatAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,22 +19,57 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddDbContext<PeopleChatContext>();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-builder.Services.AddAuthorization();
+builder.Services.AddSwaggerGen(options =>
+    {
+        options.AddSecurityDefinition(name: "Bearer", securityScheme: new OpenApiSecurityScheme
+            {
+                Name = "Authorization",
+                Description = "Enter the Bearer Authorization string as following: `Bearer Generated-JWT-Token`",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.Http,
+                BearerFormat = "JWT",
+                Scheme = "Bearer"
+            }
+        );
+        options.AddSecurityRequirement(
+            new OpenApiSecurityRequirement
+                {{
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type=ReferenceType.SecurityScheme,
+                            Id="Bearer"
+                        }
+                    },
+                    new List<string>()
+                }}
+            );
+        }
+    );
+
+var authOptionSection = builder.Configuration.GetSection("AppSettings:AuthOptions");
+var key = authOptionSection["EncryptionKey"];
+builder.Services.Configure<AuthOptions>(authOptionSection);
+builder.Services.AddTransient<IJwtService, JwtService>();
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        options.SaveToken = true;
+        options.IncludeErrorDetails = true;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
-            ValidIssuer = AuthOptions.ISSUER,
+            ValidIssuer = authOptionSection["Issuer"],
             ValidateAudience = true,
-            ValidAudience = AuthOptions.AUDIENCE,
+            ValidAudience = authOptionSection["Audience"],
             ValidateLifetime = true,
-            IssuerSigningKey = AuthOptions.GetSymmetricSecurityKey(),
+            IssuerSigningKey = AuthOptions.GetSymmetricSecurityKey(key!),
             ValidateIssuerSigningKey = true
         };
     });
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
@@ -48,13 +88,3 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
-
-
-public class AuthOptions
-{
-    public const string ISSUER = "PeopleChatAPI"; // издатель токена
-    public const string AUDIENCE = "PeopleChat"; // потребитель токена
-    const string KEY = "10512@#5720agjh@#!95871as10!@93710";   // ключ для шифрации
-    public static SymmetricSecurityKey GetSymmetricSecurityKey() =>
-        new SymmetricSecurityKey(Encoding.UTF8.GetBytes(KEY));
-}

@@ -12,24 +12,37 @@ using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pag
 using Microsoft.IdentityModel.Tokens;
 using PeopleChatAPI.Models;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+using PeopleChatAPI.Dto;
+using Microsoft.AspNetCore.Authorization;
+using PeopleChatAPI.Interfaces;
 
 namespace PeopleChatAPI.Controllers
 {
     [Route("api/Auth")]
     [ApiController]
+    [AllowAnonymous]
     public class AuthController(PeopleChatContext context) : ControllerBase
     {
         private readonly PeopleChatContext _context = context;
 
         [HttpPost("Register")]
-        public async Task<IResult> CreateNewUser(string userLogin, Byte[] userPassword)
+        public async Task<IResult> CreateNewUser([FromBody] AuthDto authDto, [FromServices] IJwtService jwtService)
         {
-            Auth auth = new Auth();
+            string userLogin = authDto.UserLogin;
+            byte[] userPassword = authDto.UserPassword;
+
+            Auth auth = new();
+
+            UserDto userData;
             try
             {
                 auth.UserLogin = userLogin;
                 auth.UserPassword = userPassword;
-                auth.RoleId = _context.Roles.FirstOrDefaultAsync(x => x.RoleName == "user")!.Id;
+
+                Role? role = await _context.Roles.FirstOrDefaultAsync(x => x.RoleName == "user");
+
+                auth.RoleId = role!.Id;
+
                 await _context.Auths.AddAsync(auth);
                 await _context.SaveChangesAsync();
             }
@@ -46,12 +59,13 @@ namespace PeopleChatAPI.Controllers
                 await _context.Users.AddAsync(user);
                 await _context.SaveChangesAsync();
 
-                string encodedJwt = GetJWT(userLogin);
+                userData = new UserDto(user);
+                string accessToken = jwtService.GenerateToken(authDto);
 
                 var response = new
                 {
-                    access_token = encodedJwt,
-                    user_data = user
+                    accessToken,
+                    userData
                 };
 
                 return Results.Json(response);
@@ -62,10 +76,13 @@ namespace PeopleChatAPI.Controllers
         }
 
         [HttpPost("Login")]
-        public async Task<IResult> PostAuth(string userLogin, Byte[] userPassword)
+        public async Task<IResult> PostAuth([FromBody] AuthDto authDto, [FromServices] IJwtService jwtService)
         {
+            string userLogin = authDto.UserLogin;
+            byte[] userPassword = authDto.UserPassword;
             Auth? newAuth = new Auth();
             User? user = new User();
+            UserDto userData;
             try
             {
                 newAuth = await _context.Auths.FirstOrDefaultAsync(x => x.UserLogin == userLogin && x.UserPassword == userPassword);
@@ -73,12 +90,13 @@ namespace PeopleChatAPI.Controllers
 
                 if (user == null) return Results.Unauthorized();
 
-                string encodedJwt = GetJWT(userLogin);
+                userData = new UserDto(user);
+                string accessToken = jwtService.GenerateToken(authDto);
 
                 var response = new
                 {
-                    access_token = encodedJwt,
-                    user_data = user
+                    accessToken,
+                    userData
                 };
 
                 return Results.Json(response);
@@ -87,28 +105,6 @@ namespace PeopleChatAPI.Controllers
             {
                 return Results.Unauthorized();
             }
-        }
-
-        private string GetJWT(string UserLogin)
-        {
-            var claims = new List<Claim> { new Claim(ClaimTypes.Name, UserLogin) };
-
-            var jwt = new JwtSecurityToken
-            (
-                issuer: AuthOptions.ISSUER,
-                audience: AuthOptions.AUDIENCE,
-                claims: claims,
-                expires: DateTime.UtcNow.Add(TimeSpan.FromDays(30)),
-                signingCredentials: new SigningCredentials
-                (
-                    AuthOptions.GetSymmetricSecurityKey(),
-                    SecurityAlgorithms.HmacSha256
-                )
-            );
-
-            string encodedJwt = new JwtSecurityTokenHandler().WriteToken(jwt);
-
-            return encodedJwt;
         }
     }
 }
