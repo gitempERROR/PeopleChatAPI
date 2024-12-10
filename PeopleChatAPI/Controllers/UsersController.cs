@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using PeopleChatAPI.Dto;
 using PeopleChatAPI.Models;
 
 namespace PeopleChatAPI.Controllers
@@ -23,10 +24,11 @@ namespace PeopleChatAPI.Controllers
 
         [HttpGet]
         [Authorize]
-        public async Task<ActionResult<List<User>>> GetUsers()
+        public async Task<ActionResult<List<UserDto>>> GetUsers()
         {
             List<User> users = await _context.Users.ToListAsync();
-            return users;
+            List<UserDto> userDtos = users.Select(user => new UserDto(user)).ToList();
+            return userDtos;
         }
 
 

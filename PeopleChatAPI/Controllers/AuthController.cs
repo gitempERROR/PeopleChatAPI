@@ -1,17 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
-using System.Security.Claims;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
-using Microsoft.IdentityModel.Tokens;
 using PeopleChatAPI.Models;
-using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using PeopleChatAPI.Dto;
 using Microsoft.AspNetCore.Authorization;
 using PeopleChatAPI.Interfaces;
@@ -33,7 +22,7 @@ namespace PeopleChatAPI.Controllers
 
             Auth auth = new();
 
-            UserDto userData;
+            UserDto userData = authDto.UserData!;
             try
             {
                 auth.UserLogin = userLogin;
@@ -52,14 +41,20 @@ namespace PeopleChatAPI.Controllers
 
             try
             {
-                User user = new User();
-                user.UserFirstname = "";
-                user.UserLastname = "";
-                user.AuthId = auth.Id;
+                Gender? gender = await _context.Genders.FirstOrDefaultAsync(x => x.GenderName == userData.Gender);
+
+                User user = new()
+                {
+                    UserFirstname = userData.UserFirstname,
+                    UserLastname = userData.UserLastname,
+                    BirthDate = userData.BirthDate,
+                    AuthId = auth.Id,
+                    GenderId = gender!.Id
+                };
                 await _context.Users.AddAsync(user);
                 await _context.SaveChangesAsync();
 
-                userData = new UserDto(user);
+                userData.Id = user.Id;
                 string accessToken = jwtService.GenerateToken(authDto);
 
                 var response = new
