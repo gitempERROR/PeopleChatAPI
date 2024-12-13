@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PeopleChatAPI.Dto;
@@ -26,9 +21,16 @@ namespace PeopleChatAPI.Controllers
         [Authorize]
         public async Task<ActionResult<List<UserDto>>> GetUsers()
         {
-            List<User> users = await _context.Users.ToListAsync();
-            List<UserDto> userDtos = users.Select(user => new UserDto(user)).ToList();
-            return userDtos;
+            try
+            {
+                List<User> users = await _context.Users.ToListAsync();
+                List<UserDto> userDtos = users.Select(user => new UserDto(user)).ToList();
+                return userDtos;
+            }
+            catch (Exception ex) 
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
 
@@ -36,9 +38,38 @@ namespace PeopleChatAPI.Controllers
         [Authorize]
         public async Task<ActionResult<User>> GetUser(int id)
         {
-            User? user = await _context.Users.FirstOrDefaultAsync(item => item.Id == id);
-            if (user == null) return NotFound();
-            return user;
+            try
+            {
+                User? user = await _context.Users.FirstOrDefaultAsync(item => item.Id == id);
+                if (user == null) return NotFound();
+                return user;
+            }
+            catch (Exception ex) 
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPost("Update")]
+        [Authorize]
+        public async Task<IActionResult> UpdateUser(UserDto userData)
+        {
+            try
+            {
+                User? user = await _context.Users.FirstOrDefaultAsync(item => item.Id == userData.Id);
+                if (user == null) return NotFound();
+
+                user.BirthDate = userData.BirthDate;
+                user.UserLastname = userData.UserLastname;
+                user.UserFirstname = userData.UserFirstname;
+                user.Image = userData.Image;
+                await _context.SaveChangesAsync();
+                return Ok();
+            }
+            catch (Exception ex) 
+            {
+                return BadRequest(ex.Message);
+            }
         }
     }
 }

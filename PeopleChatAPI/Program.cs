@@ -1,14 +1,8 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 using PeopleChatAPI.Models;
 using Microsoft.OpenApi.Models;
 using PeopleChatAPI.Configuration;
-using Microsoft.Extensions.Options;
 using PeopleChatAPI.Interfaces;
 using PeopleChatAPI.Services;
 
