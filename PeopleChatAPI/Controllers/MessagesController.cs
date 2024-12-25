@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using PeopleChatAPI.Dto;
 using PeopleChatAPI.Models;
 
 namespace PeopleChatAPI.Controllers
@@ -21,15 +22,25 @@ namespace PeopleChatAPI.Controllers
         }
 
         // GET: api/Messages
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Message>>> GetMessages()
+        [HttpPost]
+        public async Task<ActionResult<IEnumerable<MessageDto>>> GetMessages([FromBody] IdDto usersID)
         {
-            return await _context.Messages.ToListAsync();
+            List<Message> messages = await _context.Messages
+                .Where
+                (
+                    message => 
+                    message.SenderId == usersID.UserID1
+                    || message.SenderId == usersID.UserID2
+                    || message.ReceaverId == usersID.UserID1
+                    || message.ReceaverId == usersID.UserID2
+                )
+                .ToListAsync();
+            return messages.Select(message => new MessageDto(message)).ToList();
         }
 
         // GET: api/Messages/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Message>> GetMessage(int id)
+        public async Task<ActionResult<MessageDto>> GetMessage(int id)
         {
             var message = await _context.Messages.FindAsync(id);
 
@@ -38,45 +49,22 @@ namespace PeopleChatAPI.Controllers
                 return NotFound();
             }
 
-            return message;
+            MessageDto messageDto = new(message);
+            return messageDto;
         }
 
-        // PUT: api/Messages/5
+        // POST: api/Messages/Send
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutMessage(int id, Message message)
+        [HttpPost("Send")]
+        public async Task<ActionResult<MessageDto>> PostMessage(MessageDto messageDto)
         {
-            if (id != message.Id)
+            Message message = new()
             {
-                return BadRequest();
-            }
+                SenderId = messageDto.SenderId,
+                ReceaverId = messageDto.ReceaverId,
+                MessageContent = messageDto.MessageContent,
+            };
 
-            _context.Entry(message).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!MessageExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
-        // POST: api/Messages
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<Message>> PostMessage(Message message)
-        {
             _context.Messages.Add(message);
             await _context.SaveChangesAsync();
 

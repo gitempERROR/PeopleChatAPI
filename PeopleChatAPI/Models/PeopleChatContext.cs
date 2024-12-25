@@ -65,6 +65,7 @@ public partial class PeopleChatContext : DbContext
             entity.ToTable("messages");
 
             entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.MessageContent).HasColumnName("message_content");
             entity.Property(e => e.ReceaverId).HasColumnName("receaver_id");
             entity.Property(e => e.SenderId).HasColumnName("sender_id");
 

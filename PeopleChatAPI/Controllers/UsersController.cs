@@ -33,23 +33,6 @@ namespace PeopleChatAPI.Controllers
             }
         }
 
-
-        [HttpGet("{id}")]
-        [Authorize]
-        public async Task<ActionResult<User>> GetUser(int id)
-        {
-            try
-            {
-                User? user = await _context.Users.FirstOrDefaultAsync(item => item.Id == id);
-                if (user == null) return NotFound();
-                return user;
-            }
-            catch (Exception ex) 
-            {
-                return BadRequest(ex.Message);
-            }
-        }
-
         [HttpPost("Update")]
         [Authorize]
         public async Task<IActionResult> UpdateUser(UserDto userData)
@@ -59,7 +42,7 @@ namespace PeopleChatAPI.Controllers
                 User? user = await _context.Users.FirstOrDefaultAsync(item => item.Id == userData.Id);
                 if (user == null) return NotFound();
 
-                user.BirthDate = userData.BirthDate;
+                user.BirthDate = userData.BirthDate; 
                 user.UserLastname = userData.UserLastname;
                 user.UserFirstname = userData.UserFirstname;
                 user.Image = userData.Image;
