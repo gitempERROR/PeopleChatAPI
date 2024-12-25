@@ -29,10 +29,8 @@ namespace PeopleChatAPI.Controllers
                 .Where
                 (
                     message => 
-                    message.SenderId == usersID.UserID1
-                    || message.SenderId == usersID.UserID2
-                    || message.ReceaverId == usersID.UserID1
-                    || message.ReceaverId == usersID.UserID2
+                    message.SenderId == usersID.UserID1 && message.ReceaverId == usersID.UserID2
+                    || message.SenderId == usersID.UserID2 && message.ReceaverId == usersID.UserID1
                 )
                 .ToListAsync();
             return messages.Select(message => new MessageDto(message)).ToList();
@@ -69,22 +67,6 @@ namespace PeopleChatAPI.Controllers
             await _context.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetMessage), new { id = message.Id }, message);
-        }
-
-        // DELETE: api/Messages/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteMessage(int id)
-        {
-            var message = await _context.Messages.FindAsync(id);
-            if (message == null)
-            {
-                return NotFound();
-            }
-
-            _context.Messages.Remove(message);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
         }
 
         private bool MessageExists(int id)
