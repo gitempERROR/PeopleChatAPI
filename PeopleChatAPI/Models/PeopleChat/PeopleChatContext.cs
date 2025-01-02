@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
-namespace PeopleChatAPI.Models;
+namespace PeopleChatAPI.Models.PeopleChat;
 
 public partial class PeopleChatContext : DbContext
 {

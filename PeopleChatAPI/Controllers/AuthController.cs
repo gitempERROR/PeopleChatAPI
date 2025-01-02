@@ -1,9 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using PeopleChatAPI.Models;
 using PeopleChatAPI.Dto;
 using Microsoft.AspNetCore.Authorization;
 using PeopleChatAPI.Interfaces;
+using PeopleChatAPI.Models.PeopleChat;
+using PeopleChatAPI.Services;
 
 namespace PeopleChatAPI.Controllers
 {

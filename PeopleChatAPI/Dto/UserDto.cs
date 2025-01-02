@@ -1,4 +1,4 @@
-﻿using PeopleChatAPI.Models;
+﻿using PeopleChatAPI.Models.PeopleChat;
 
 namespace PeopleChatAPI.Dto
 {

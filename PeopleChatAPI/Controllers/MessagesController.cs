@@ -6,7 +6,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PeopleChatAPI.Dto;
-using PeopleChatAPI.Models;
+using PeopleChatAPI.Models.PeopleChat;
+using PeopleChatAPI.Services;
 
 namespace PeopleChatAPI.Controllers
 {
@@ -54,7 +55,7 @@ namespace PeopleChatAPI.Controllers
         // POST: api/Messages/Send
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost("Send")]
-        public async Task<ActionResult<MessageDto>> PostMessage(MessageDto messageDto)
+        public async Task<ActionResult<MessageDto>> PostMessage(MessageDto messageDto, [FromServices] ChatHub chatHub)
         {
             Message message = new()
             {
@@ -65,6 +66,8 @@ namespace PeopleChatAPI.Controllers
 
             _context.Messages.Add(message);
             await _context.SaveChangesAsync();
+
+            chatHub.SendMessageToUser(messageDto.ReceaverId.ToString(), messageDto.SenderId.ToString());
 
             return CreatedAtAction(nameof(GetMessage), new { id = message.Id }, message);
         }

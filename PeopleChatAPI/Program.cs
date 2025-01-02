@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using PeopleChatAPI.Models;
 using Microsoft.OpenApi.Models;
 using PeopleChatAPI.Configuration;
 using PeopleChatAPI.Interfaces;
 using PeopleChatAPI.Services;
+using PeopleChatAPI.Models.PeopleChat;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,6 +46,9 @@ var authOptionSection = builder.Configuration.GetSection("AppSettings:AuthOption
 var key = authOptionSection["EncryptionKey"];
 builder.Services.Configure<AuthOptions>(authOptionSection);
 builder.Services.AddTransient<IJwtService, JwtService>();
+builder.Services.AddSingleton<ChatHub>();
+
+builder.Services.AddSignalR();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -63,6 +66,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true
         };
     });
+
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
@@ -80,5 +84,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<ChatHub>("/chatHub");
 
 app.Run();

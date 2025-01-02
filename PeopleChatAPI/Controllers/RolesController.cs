@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using PeopleChatAPI.Models;
+using PeopleChatAPI.Models.PeopleChat;
 
 namespace PeopleChatAPI.Controllers
 {

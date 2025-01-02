@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PeopleChatAPI.Dto;
-using PeopleChatAPI.Models;
+using PeopleChatAPI.Models.PeopleChat;
 
 namespace PeopleChatAPI.Controllers
 {

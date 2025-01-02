@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace PeopleChatAPI.Models;
+namespace PeopleChatAPI.Models.PeopleChat;
 
 public partial class Message
 {
