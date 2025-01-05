@@ -19,7 +19,7 @@ namespace PeopleChatAPI.Dto
             Id = message.Id;
             SenderId = message.SenderId;
             ReceaverId = message.ReceaverId;
-            MessageContent = message.MessageContent;
+            MessageContent = message.Message1;
         }
     }
 }

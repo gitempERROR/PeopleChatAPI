@@ -19,15 +19,22 @@ namespace PeopleChatAPI.Controllers
 
         [HttpGet]
         [Authorize]
-        public async Task<ActionResult<List<UserDto>>> GetUsers()
+        public async Task<ActionResult<List<UserDto>>> GetUsers([FromHeader] int userId)
         {
             try
             {
                 List<User> users = await _context.Users.ToListAsync();
                 List<UserDto> userDtos = users.Select(user => new UserDto(user)).ToList();
+                foreach (UserDto userDto in userDtos)
+                {
+                    int count = await _context.Messages.Where(message =>
+                            message.SenderId == userDto.Id && message.ReceaverId == userId && message.IsRead == false
+                        ).CountAsync();
+                    userDto.NotReadMessages = count;
+                }
                 return userDtos;
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }
@@ -42,14 +49,14 @@ namespace PeopleChatAPI.Controllers
                 User? user = await _context.Users.FirstOrDefaultAsync(item => item.Id == userData.Id);
                 if (user == null) return NotFound();
 
-                user.BirthDate = userData.BirthDate; 
+                user.BirthDate = userData.BirthDate;
                 user.UserLastname = userData.UserLastname;
                 user.UserFirstname = userData.UserFirstname;
                 user.Image = userData.Image;
                 await _context.SaveChangesAsync();
                 return Ok();
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }

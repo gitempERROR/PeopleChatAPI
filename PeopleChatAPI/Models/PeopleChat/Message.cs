@@ -11,7 +11,9 @@ public partial class Message
 
     public int ReceaverId { get; set; }
 
-    public string MessageContent { get; set; } = null!;
+    public string Message1 { get; set; } = null!;
+
+    public bool IsRead { get; set; }
 
     public virtual User Receaver { get; set; } = null!;
 

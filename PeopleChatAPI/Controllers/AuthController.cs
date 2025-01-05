@@ -3,8 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using PeopleChatAPI.Dto;
 using Microsoft.AspNetCore.Authorization;
 using PeopleChatAPI.Interfaces;
-using PeopleChatAPI.Models.PeopleChat;
 using PeopleChatAPI.Services;
+using PeopleChatAPI.Models.PeopleChat;
 
 namespace PeopleChatAPI.Controllers
 {

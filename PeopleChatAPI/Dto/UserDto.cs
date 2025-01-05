@@ -27,5 +27,7 @@ namespace PeopleChatAPI.Dto
             BirthDate = user.BirthDate;
             Gender = user.Gender != null ? user.Gender.GenderName : "";
         }
+
+        public int NotReadMessages { get; set; }
     }
 }

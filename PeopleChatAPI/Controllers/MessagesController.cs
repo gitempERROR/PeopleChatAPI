@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PeopleChatAPI.Dto;
 using PeopleChatAPI.Models.PeopleChat;
@@ -34,22 +29,13 @@ namespace PeopleChatAPI.Controllers
                     || message.SenderId == usersID.UserID2 && message.ReceaverId == usersID.UserID1
                 )
                 .ToListAsync();
-            return messages.Select(message => new MessageDto(message)).ToList();
-        }
-
-        // GET: api/Messages/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<MessageDto>> GetMessage(int id)
-        {
-            var message = await _context.Messages.FindAsync(id);
-
-            if (message == null)
+            foreach (Message message in messages)
             {
-                return NotFound();
+                if (message.ReceaverId == usersID.UserID1)
+                    message.IsRead = true;
             }
-
-            MessageDto messageDto = new(message);
-            return messageDto;
+            await _context.SaveChangesAsync();
+            return messages.Select(message => new MessageDto(message)).ToList();
         }
 
         // POST: api/Messages/Send
@@ -61,20 +47,16 @@ namespace PeopleChatAPI.Controllers
             {
                 SenderId = messageDto.SenderId,
                 ReceaverId = messageDto.ReceaverId,
-                MessageContent = messageDto.MessageContent,
+                Message1 = messageDto.MessageContent,
             };
 
             _context.Messages.Add(message);
             await _context.SaveChangesAsync();
 
-            chatHub.SendMessageToUser(messageDto.ReceaverId.ToString(), messageDto.SenderId.ToString());
+            await chatHub.SendMessageToUser(messageDto.ReceaverId.ToString(), messageDto.SenderId.ToString());
 
-            return CreatedAtAction(nameof(GetMessage), new { id = message.Id }, message);
-        }
-
-        private bool MessageExists(int id)
-        {
-            return _context.Messages.Any(e => e.Id == id);
+            MessageDto newMessageDto = new(message);
+            return newMessageDto;
         }
     }
 }
