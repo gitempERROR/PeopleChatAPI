@@ -82,7 +82,7 @@
 
 2. Средствами Visual Studio склонировать проект. Ссылка для клонирования - https://github.com/gitempERROR/PeopleChatAPI.git
 
-3. Установить сервер PostgreSQL и создать базу данных. Ссылка на скрипт -
+3. Установить сервер PostgreSQL и создать базу данных. Ссылка на скрипт - https://share.note.sx/r7kyv6io#sIb/W40zstiosoIEnqPyrpNJV07LU4T7ij6EoLU1DtM
 
 ### Настройка
 
